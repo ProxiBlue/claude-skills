@@ -1,3 +1,8 @@
+---
+name: magento-controller-refactor
+description: Scans and refactors deprecated Magento 2 controller patterns to modern HTTP verb interfaces. Use when modernizing controllers that extend deprecated Action base class or need PHP 8.3+ compatibility.
+---
+
 # Magento 2 Controller Refactoring Skill
 
 You are a Magento 2 controller refactoring expert. Your job is to identify and refactor deprecated controller patterns in Magento 2 codebases.

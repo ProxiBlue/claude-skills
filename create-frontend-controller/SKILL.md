@@ -1,3 +1,8 @@
+---
+name: create-frontend-controller
+description: Creates a frontend controller action in Magento 2 for the storefront. Use when building custom frontend pages, AJAX endpoints, form submission handlers, or API-like endpoints for JavaScript.
+---
+
 # Create Frontend Controller Action
 
 ## Description
