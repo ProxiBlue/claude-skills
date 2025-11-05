@@ -2,6 +2,9 @@
 
 This folder contains specialized Magento 2 development skills that extend Claude Code's capabilities with domain-specific knowledge for Magento 2 / Mage-OS development, particularly for Hyvä Themes projects. They have been created specifically during an ongoing task for a complex magento 1 to magento 2 migration project, to allow claude to migrate code more consistently and using Hyva conventions. It is an ongoing Work In Progress
 
+There are some environment specific entries, for example paths to exampel files which is my dev environment. I don;t have enough knowledge yet on skills definition to know how to make that more dynamic. so check before use.
+
+
 ## What Are Skills?
 
 Skills are reusable, context-aware prompts that guide Claude through complex, multi-step tasks. Each skill is stored in its own folder with a `SKILL.md` file containing specialized instructions, examples, and best practices.
