@@ -1,3 +1,8 @@
+---
+name: analyze-m1-module-for-migration
+description: Systematically analyze a Magento 1 module to determine its purpose, usage, and migration requirements for Magento 2. Use when you need to decide whether to migrate a M1 module, find alternatives, or skip it.
+---
+
 # Skill: Analyze M1 Module for Migration
 
 **Purpose:** Systematically analyze a Magento 1 module to determine its purpose, usage, and migration requirements for Magento 2.
@@ -150,7 +155,127 @@ Pull sample records to understand usage patterns:
 SELECT * FROM {table_name} LIMIT 10;
 ```
 
-#### 3.5 Check Core Table Modifications
+#### 3.5 Show Products Using the Feature (Max 10)
+**Objective:** Display real products that actively use the module's functionality for testing/verification purposes.
+
+**Purpose:**
+- Provides concrete test cases for M2 migration
+- Shows real-world usage patterns
+- Helps identify which products to verify after migration
+- Useful for stakeholder review (they can see familiar products)
+
+**Query Template:**
+```sql
+-- Generic template (adjust based on module's data structure)
+SELECT
+    module_table.id,
+    module_table.{key_field},
+    cpe.entity_id,
+    cpe.sku,
+    cpev.value as product_name,
+    module_table.{relevant_data_column}
+FROM {module_table_name} AS module_table
+LEFT JOIN catalog_product_entity cpe
+    ON module_table.product_id = cpe.entity_id
+LEFT JOIN catalog_product_entity_varchar cpev
+    ON cpe.entity_id = cpev.entity_id
+    AND cpev.attribute_id = (
+        SELECT attribute_id
+        FROM eav_attribute
+        WHERE attribute_code = 'name'
+        AND entity_type_id = 4
+    )
+WHERE module_table.product_id IS NOT NULL
+ORDER BY cpe.entity_id
+LIMIT 10;
+```
+
+**Example (Custom Option Default Values):**
+```sql
+-- Show 10 products with default option values configured
+SELECT
+    dov.option_id,
+    dov.option_type_id,
+    dov.product_id,
+    cpe.sku,
+    cpev.value as product_name,
+    cpot.title as option_name,
+    cpotv.title as default_value_title
+FROM default_option_value dov
+LEFT JOIN catalog_product_entity cpe
+    ON dov.product_id = cpe.entity_id
+LEFT JOIN catalog_product_entity_varchar cpev
+    ON cpe.entity_id = cpev.entity_id
+    AND cpev.attribute_id = (
+        SELECT attribute_id
+        FROM eav_attribute
+        WHERE attribute_code = 'name'
+        AND entity_type_id = 4
+    )
+LEFT JOIN catalog_product_option cpo
+    ON dov.option_id = cpo.option_id
+LEFT JOIN catalog_product_option_title cpot
+    ON cpo.option_id = cpot.option_id
+    AND cpot.store_id = 0
+LEFT JOIN catalog_product_option_type_value cpotv
+    ON dov.option_type_id = cpotv.option_type_id
+WHERE dov.product_id IS NOT NULL
+ORDER BY cpe.entity_id
+LIMIT 10;
+```
+
+**Example (Product Images):**
+```sql
+-- Show 10 products with custom images uploaded
+SELECT
+    cpe.entity_id,
+    cpe.sku,
+    cpev.value as product_name,
+    cpotv.option_type_id,
+    cpotv.image as image_path,
+    cpotv.title as option_value_title
+FROM catalog_product_option_type_value cpotv
+INNER JOIN catalog_product_option cpo
+    ON cpotv.option_id = cpo.option_id
+INNER JOIN catalog_product_entity cpe
+    ON cpo.product_id = cpe.entity_id
+LEFT JOIN catalog_product_entity_varchar cpev
+    ON cpe.entity_id = cpev.entity_id
+    AND cpev.attribute_id = (
+        SELECT attribute_id
+        FROM eav_attribute
+        WHERE attribute_code = 'name'
+        AND entity_type_id = 4
+    )
+WHERE cpotv.image IS NOT NULL
+ORDER BY cpe.entity_id
+LIMIT 10;
+```
+
+**Output Format:**
+Present the results in a clear, readable format:
+```
+Sample Products Using {Feature}:
+
+1. SKU: X9458146 | Product: "500 Gallon Vertical Tank" | Option: "Tank Color" → Default: "White"
+2. SKU: X2264184 | Product: "1000 Gallon Horizontal Tank" | Option: "FDA Compliant" → Default: "Yes"
+3. SKU: X2197105 | Product: "1500 Gallon Vertical Tank" | Option: "Specific Gravity" → Default: "1.5"
+...
+10. SKU: X4297366 | Product: "2500 Gallon Vertical Tank" | Option: "Base Type" → Default: "Flat Bottom"
+
+Total Products: 1,222 (showing 10 for reference)
+```
+
+**Why Limit to 10?**
+- Keeps output concise and readable
+- Provides sufficient examples without overwhelming the analysis
+- Allows for quick manual verification in M2 after migration
+- Can be easily included in reports and documentation
+
+**Usage in Report:**
+Include this list in the "Usage Analysis" section of the migration report under a "Sample Products for Testing" heading.
+
+#### 3.6 Check Core Table Modifications
 If module adds columns to core tables:
 ```sql
 -- Check if custom columns exist
@@ -305,6 +430,22 @@ Is module in use? (records > 0)
 - **Date Range:** {oldest} to {newest}
 - **Sample Data:** {show 3-5 examples}
 
+### Sample Products for Testing
+List of 10 products actively using this feature (for M2 migration verification):
+
+1. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+2. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+3. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+4. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+5. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+6. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+7. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+8. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+9. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+10. **SKU:** {sku} | **Product:** "{name}" | **Feature Data:** {relevant detail}
+
+*Total: {X,XXX} products (showing 10 representative samples)*
+
 ### File System Usage
 - **Directory:** pub/media/{path}/
 - **File Count:** {XXX} files
@@ -392,12 +533,31 @@ ls -la /home/lucas/workspace/uptactics/ntotankM1/app/code/local/Magebuzz/Customo
 tree -L 3 /home/lucas/workspace/uptactics/ntotankM1/app/code/local/Magebuzz/Customoption
 
 # 3. Check database usage
-ddev mysql ntosource -e "SELECT COUNT(*) FROM default_option_value;"
+ddev exec mysql ntosource -e "SELECT COUNT(*) FROM default_option_value;"
+ddev exec mysql ntosource -e "SELECT COUNT(DISTINCT product_id) FROM default_option_value WHERE product_id IS NOT NULL;"
 
-# 4. Research alternatives
+# 4. Get 10 sample products using the feature
+ddev exec mysql ntosource -e "
+SELECT
+    dov.product_id,
+    cpe.sku,
+    cpev.value as product_name,
+    cpot.title as option_name,
+    cpotv.title as default_value
+FROM default_option_value dov
+LEFT JOIN catalog_product_entity cpe ON dov.product_id = cpe.entity_id
+LEFT JOIN catalog_product_entity_varchar cpev ON cpe.entity_id = cpev.entity_id AND cpev.attribute_id = (SELECT attribute_id FROM eav_attribute WHERE attribute_code = 'name' AND entity_type_id = 4)
+LEFT JOIN catalog_product_option cpo ON dov.option_id = cpo.option_id
+LEFT JOIN catalog_product_option_title cpot ON cpo.option_id = cpot.option_id AND cpot.store_id = 0
+LEFT JOIN catalog_product_option_type_value cpotv ON dov.option_type_id = cpotv.option_type_id
+WHERE dov.product_id IS NOT NULL
+LIMIT 10;
+"
+
+# 5. Research alternatives
 # Use WebSearch for "magento 2 custom option default value"
 
-# 5. Make recommendation based on findings
+# 6. Make recommendation based on findings
 ```
 
 ## Tips and Best Practices
@@ -450,6 +610,7 @@ A thorough analysis should answer:
 - ✅ What does this module do? (clear explanation)
 - ✅ Is it being used? (concrete data)
 - ✅ How much is it used? (record counts, percentages)
+- ✅ Which products use it? (10 sample products for testing)
 - ✅ Should we migrate it? (justified recommendation)
 - ✅ What are the alternatives? (researched options)
 - ✅ How do we migrate it? (step-by-step plan)
@@ -475,4 +636,5 @@ After completing this skill, you should have:
 
 ## Version History
 
+- **v1.1** (2025-01-05) - Added Step 3.5: Show 10 sample products using the feature for testing/verification
 - **v1.0** (2025-01-05) - Initial skill creation based on Magebuzz_Customoption analysis

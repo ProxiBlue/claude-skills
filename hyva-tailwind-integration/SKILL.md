@@ -1,3 +1,8 @@
+---
+name: hyva-tailwind-integration
+description: Comprehensive guidance on integrating Tailwind CSS and JavaScript in Hyvä Themes, including configuration merging, module registration, and build processes for Magento 2.
+---
+
 # Hyvä Theme Tailwind CSS & JS Integration Skill
 
 ## Purpose
