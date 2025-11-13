@@ -11,30 +11,45 @@ Skills are reusable, context-aware prompts that guide Claude through complex, mu
 
 ## Available Magento Skills
 
-### 1. **analyze-m1-module-for-migration**
+### 1. **github-analysis**
+Systematically analyzes GitHub tickets with proper local reproduction. Automatically substitutes production URLs with local DDEV hosts, ensures database sync, downloads missing assets, and reproduces issues locally before proposing solutions.
+
+**Use when:** Analyzing GitHub tickets, debugging reported issues, investigating bugs, reproducing problems
+
+### 2. **analyze-m1-module-for-migration**
 Systematically analyzes a Magento 1 module to determine its purpose, usage, and migration requirements for Magento 2. Helps decide whether to migrate, find alternatives, or skip the module.
 
 **Use when:** Planning M1 to M2 migration, evaluating legacy modules
 
-### 2. **create-backend-controller**
+### 3. **create-backend-controller**
 Creates a backend (adminhtml) controller action in Magento 2 with proper ACL, routing, authorization, and admin UI integration.
 
 **Use when:** Building admin pages, AJAX endpoints, form handlers, or mass actions
 
-### 3. **create-frontend-controller**
+### 4. **create-frontend-controller**
 Creates a frontend controller action in Magento 2 for the storefront with proper routing, dependency injection, and response handling.
 
 **Use when:** Building custom frontend pages, AJAX endpoints, form submission handlers, or API-like endpoints for JavaScript
 
-### 4. **hyva-tailwind-integration**
+### 5. **hyva-module-compatibility**
+Identify and fix Magento 2 module compatibility issues with Hyvä Themes. Covers block plugin bypasses, RequireJS/Knockout replacements, ViewModels, and Alpine.js integration for modules that work in admin but fail on Hyvä frontend.
+
+**Use when:** Modules work in admin but fail on Hyvä frontend, JavaScript features missing or broken
+
+### 6. **hyva-tailwind-integration**
 Comprehensive guidance on integrating Tailwind CSS and JavaScript in Hyvä Themes, including configuration merging, module registration, and build processes.
 
 **Use when:** Adding custom Tailwind styles, creating new Hyvä modules, or debugging Tailwind builds
 
-### 5. **magento-controller-refactor**
+### 7. **magento-controller-refactor**
 Scans and refactors deprecated Magento 2 controller patterns to modern HTTP verb interfaces. Updates controllers that extend deprecated `Action` base class to PHP 8.3+ compatible patterns.
 
 **Use when:** Modernizing controllers, upgrading to PHP 8.3+, or fixing deprecation warnings
+
+### 8. **magento2-widget-creation**
+Comprehensive guide for creating custom widget modules in Magento 2 that can be inserted into CMS pages and blocks. Covers module structure, widget configuration, templates, JavaScript, CSS, and form submission handling.
+
+**Use when:** Creating custom widgets, adding CMS-insertable components, building admin widget configuration
 
 ## How to Check If Skills Are Loaded
 
