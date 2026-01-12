@@ -177,27 +177,119 @@ ls -la *.md
 
 #### Documentation Template for Features/Modules
 
+**IMPORTANT: Structure Documentation for End Users First**
+
+The wiki is primarily used by clients, site administrators, and non-technical users. Always structure documentation with user-facing content first, followed by technical details at the end.
+
+**Recommended Structure:**
+1. Overview (brief, what it does)
+2. User-facing content (how to use it)
+3. Troubleshooting (common issues end users might encounter)
+4. External documentation links
+5. Horizontal rule separator (`---`)
+6. Technical details (for developers)
+
 ```markdown
 # [Feature/Module Name]
 
 ## Overview
-Brief 2-3 sentence description of what this feature does and why it exists.
+Brief 2-3 sentence description of what this feature does and why it exists. Focus on business value and what users can accomplish with it.
 
-## Location
+## Managing [Feature Name]
+
+### Admin Access
+**Path:** Section > Subsection > Page
+
+From here you can:
+- Action 1
+- Action 2
+- Action 3
+
+### Creating/Configuring [Feature]
+Step-by-step guide for admin users:
+1. Navigate to [path]
+2. Configure [settings]
+   - **Setting 1:** Description of what it does
+   - **Setting 2:** Description of what it does
+3. Save and flush cache
+
+### Available Options
+**Option 1** - What this option provides
+**Option 2** - What this option provides
+**Option 3** - What this option provides
+
+## Advanced Features
+(If applicable - optional features or advanced usage)
+
+### Import/Export
+(If applicable)
+
+### Bulk Operations
+(If applicable)
+
+## Troubleshooting
+
+### Issue: [Common Problem]
+**Symptoms:** What the user sees
+
+**Possible Causes:**
+1. Cause 1
+2. Cause 2
+
+**Solution:**
+```bash
+# Commands or admin steps to fix
+```
+
+### Issue: [Another Problem]
+**Symptoms:** What the user sees
+
+**Solution:**
+1. Clear browser cache
+2. Contact developer if issue persists
+
+## Documentation
+
+**Official Documentation:** [External Docs](https://example.com)
+
+**Key Pages:**
+- [Page 1](https://example.com/page1)
+- [Page 2](https://example.com/page2)
+
+---
+
+## Technical Details
+
+### Module Location
 **Module:** `Vendor_ModuleName`
+**Version:** X.Y.Z
 **Path:** `app/code/Vendor/ModuleName/`
-**Dependencies:** List required modules
+**Dependencies:**
+- Magento_Backend
+- Magento_Catalog
 
-## Purpose
-Detailed explanation of business requirements this feature fulfills.
+**Custom Templates:**
+- Template 1: `path/to/template.phtml`
+- Template 2: `path/to/template2.phtml`
 
-## How It Works
+### Features
+Technical features list:
+- Feature 1
+- Feature 2
 
 ### Architecture
-High-level overview of how the feature is implemented:
-- Key classes and their responsibilities
-- Data flow
-- Integration points with Magento
+The system consists of:
+1. **Backend Component:** Purpose
+2. **Frontend Component:** Purpose
+3. **Data Model:** Purpose
+
+### Database Schema
+**Tables:**
+- `table_name` - Purpose
+
+**Key Fields:**
+- `field_1` - Description
+- `field_2` - Description
 
 ### Key Components
 
@@ -209,74 +301,65 @@ High-level overview of how the feature is implemented:
 // Key code snippet if helpful
 ```
 
-#### [Component 2 - e.g., Template]
-**File:** `path/to/file.phtml:line`
-**Purpose:** What this component does
-
 ### Configuration
 **Admin Path:** Stores > Configuration > Section > Subsection
 **Settings:**
 - `config/path/setting1` - Description
 - `config/path/setting2` - Description
 
-## Usage
+### Customization
 
-### Admin Usage
-Step-by-step guide for admin users:
-1. Navigate to [path]
-2. Configure [settings]
-3. Save and flush cache
+#### Template Customization
+How developers can customize templates
 
-### Frontend Usage
-How customers interact with this feature:
-- Where it appears
-- What actions they can take
-- Expected behavior
+#### Styling
+How developers can customize styling
 
-### Developer Usage
-How developers work with this feature:
-- API methods
-- Events fired
-- Extension points
-
-## Examples
-
-### Example 1: [Use Case]
-```php
-// Code example
+### CLI Commands
+```bash
+bin/magento command:name
 ```
 
-### Example 2: [Use Case]
-```xml
-<!-- Configuration example -->
-```
+### API Access
+REST or GraphQL API examples (if applicable)
 
-## Troubleshooting
+### Related Features
+- [Related Page](Related-Page) - Description
+- [Another Feature](Another-Feature) - Description
 
-### Issue: [Common Problem]
-**Symptoms:** What the user sees
-**Cause:** Why it happens
-**Solution:** How to fix it
+### Technical Documentation
+**Developer Documentation:** [Dev Docs](https://example.com/dev)
 
-### Issue: [Another Problem]
-...
+**Developer Pages:**
+- [Setup](https://example.com/setup)
+- [API](https://example.com/api)
 
-## Related Features
-- Link to related wiki pages
-- Link to related modules
-- Link to third-party documentation
+## Migration from Magento 1
+(If applicable - include migration details at the very end)
 
-## Technical Notes
-- Database schema changes
-- Performance considerations
-- Security considerations
-- Upgrade/migration notes
+### Overview
+Migration strategy and approach
+
+### Migration Process
+Step-by-step migration details
+
+### Migration Challenges & Solutions
+Technical challenges encountered
+
+---
 
 ## Maintenance
 **Last Updated:** YYYY-MM-DD
 **Last Reviewed By:** Developer Name
 **Magento Version:** 2.4.x / Mage-OS 1.x.x
 ```
+
+**Key Principles:**
+1. **Users First**: Admin guides, usage instructions, and troubleshooting come before technical details
+2. **Clear Separation**: Use `---` horizontal rule to separate user content from technical content
+3. **Progressive Disclosure**: Start with simple concepts, progress to complex
+4. **Accessibility**: Write troubleshooting steps that non-technical users can follow
+5. **Technical Section**: Place all developer-specific content (architecture, database schema, code examples) after the separator
 
 #### Documentation Template for Configuration
 
