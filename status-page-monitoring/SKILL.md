@@ -198,154 +198,233 @@ IMMEDIATE ACTIONS:
 21 other monitors operational.
 ```
 
-## Background Monitoring Script
+## Claude Code Status Bar Integration
 
-A companion background monitoring script is available at:
+Display monitor status directly in the Claude Code status bar for always-visible monitoring.
+
+### How It Works
+
 ```
-.claude/scripts/status-monitor.sh
-```
-
-### Usage
-```bash
-# Run once
-.claude/scripts/status-monitor.sh
-
-# Run continuously (checks every 60 seconds)
-.claude/scripts/status-monitor.sh --loop
-
-# Run continuously with custom interval (30 seconds)
-.claude/scripts/status-monitor.sh --loop 30
+┌─────────────────────────────────────────────────────────────┐
+│ [Opus] $0.12 | 21 OK                    <- All systems up   │
+│ [Opus] $0.12 | 21 1 (NTO HomePage)      <- 1 monitor down   │
+│ [Opus] $0.12 | ? stale                  <- Cache outdated   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Environment Variables
-```bash
-# Required: Set your status page URL
-export STATUS_PAGE="https://stats.uptimerobot.com/your-page-id"
-# Or for PayPal:
-export STATUS_PAGE="https://paypal-status.com/product/production"
-# Or for AWS (requires Playwright):
-export STATUS_PAGE="https://health.aws.amazon.com/health/status"
+**Architecture:**
+1. **Cron job** runs periodically, invokes Claude CLI with this skill
+2. **Claude** uses the skill to fetch and parse status from any supported provider
+3. **Bash script** captures Claude's JSON output, writes to cache file
+4. **Status bar script** reads cache file, displays in Claude Code status line
 
-# Optional: Check interval in seconds (default: 60)
-export STATUS_CHECK_INTERVAL=60
-
-# Optional: Play sound on alert (default: true)
-export STATUS_ALERT_SOUND=true
-
-# Optional: Send desktop notification (default: true)
-export STATUS_NOTIFY=true
-```
-
-### Running in Background
-```bash
-# Run in tmux session
-tmux new-session -d -s status-monitor '.claude/scripts/status-monitor.sh --loop'
-
-# Attach to see output
-tmux attach -t status-monitor
-
-# Detach: Ctrl+B, then D
-```
-
-## Claude Code Hook Integration
-
-Automatically alert Claude when monitors are down at conversation start.
+This approach leverages Claude's ability to parse multiple status page providers using the skill's documented patterns.
 
 ### Setup Instructions
 
-#### Step 1: Copy Scripts to Your Project
+#### Step 1: Scripts Location
 
-Copy these files to your project's `.claude/scripts/` directory:
-```bash
-mkdir -p .claude/scripts
-
-# Copy the scripts (adjust source path as needed)
-cp path/to/status-monitor.sh .claude/scripts/
-cp path/to/status-check-hook.sh .claude/scripts/
-
-# Make executable
-chmod +x .claude/scripts/status-monitor.sh
-chmod +x .claude/scripts/status-check-hook.sh
+The scripts are located in your project:
+```
+.claude/scripts/status-monitor-cron.sh   # Cron job - fetches & caches status
+.claude/scripts/statusline-with-monitors.sh  # Status bar - displays cached status
 ```
 
-#### Step 2: Set Environment Variable
+#### Step 2: Configure Cron Job
 
-Add to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
+Add to crontab to run the status check periodically:
 ```bash
-export STATUS_PAGE="https://stats.uptimerobot.com/your-page-id"
+crontab -e
 ```
 
-Or for other providers:
+Add this line (adjust path to your project):
 ```bash
-# PayPal
-export STATUS_PAGE="https://paypal-status.com/product/production"
+# Every 5 minutes (recommended - balances freshness vs API costs)
+*/5 * * * * /var/www/html/.claude/scripts/status-monitor-cron.sh
 
-# Google Workspace
-export STATUS_PAGE="https://www.google.com/appsstatus/dashboard/"
+# Every 15 minutes (lower cost)
+*/15 * * * * /var/www/html/.claude/scripts/status-monitor-cron.sh
 ```
 
-#### Step 3: Configure Claude Code Hook
+**Note:** This invokes Claude CLI which uses API credits. Choose interval based on:
+- How critical real-time status is for you
+- Your API usage budget
+- The skill handles any provider (UptimeRobot, PayPal, AWS, etc.) automatically
 
-Add to your `.claude/settings.local.json` (or global `~/.claude/settings.json`):
+> **⚠️ COST ALERT: Review the cost estimates below before configuring cron frequency!**
+
+### Cron Job Cost Estimates
+
+Running this skill via cron invokes Claude CLI, which consumes API credits. Plan your monitoring frequency accordingly.
+
+#### Token Usage Per Check (Estimated)
+
+| Component              | Tokens       |
+|------------------------|--------------|
+| Prompt + skill context | ~2,000-4,000 |
+| WebFetch tool call     | ~100         |
+| WebFetch result        | ~300-500     |
+| JSON output            | ~50          |
+| **Total**              | **~3,000-5,000** |
+
+#### Cost Per Check (Claude Sonnet Pricing)
+
+| Type   | Tokens | Rate   | Cost    |
+|--------|--------|--------|---------|
+| Input  | ~4,000 | $3/1M  | $0.012  |
+| Output | ~200   | $15/1M | $0.003  |
+| **Total** |     |        | **~$0.015** |
+
+#### Daily/Monthly Cost by Interval
+
+| Interval     | Checks/day | Cost/day | Cost/month |
+|--------------|------------|----------|------------|
+| Every 1 min  | 1,440      | ~$21.60  | ~$648      |
+| Every 5 min  | 288        | ~$4.32   | ~$130      |
+| Every 15 min | 96         | ~$1.44   | ~$43       |
+| Every 30 min | 48         | ~$0.72   | ~$22       |
+| Every 1 hour | 24         | ~$0.36   | ~$11       |
+
+#### Recommendations
+
+| Use Case | Recommended Interval | Estimated Cost |
+|----------|---------------------|----------------|
+| Production-critical sites | Every 5-15 min | $1.50-4.50/day |
+| General awareness | Every 15-30 min | $0.70-1.50/day |
+| Low-priority/dev sites | Every 30-60 min | $0.35-0.70/day |
+
+**Cost-saving tips:**
+- Use longer intervals (15-30 min) for non-critical monitoring
+- Consider using free UptimeRobot email alerts as primary notification
+- Use this cron integration for status bar visibility, not primary alerting
+- Playwright-based checks (AWS, etc.) cost more due to additional tool calls
+
+#### Step 3: Configure Claude Code Status Line
+
+Add to your Claude Code settings file.
+
+**Project-level** (`.claude/settings.local.json`):
 ```json
 {
-  "hooks": {
-    "user-prompt-submit": [
-      {
-        "command": ".claude/scripts/status-check-hook.sh",
-        "timeout": 5000
-      }
-    ]
+  "statusLine": {
+    "type": "command",
+    "command": "/var/www/html/.claude/scripts/statusline-with-monitors.sh"
+  }
+}
+```
+
+**Or user-level** (`~/.claude/settings.json`):
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "/path/to/your/project/.claude/scripts/statusline-with-monitors.sh"
   }
 }
 ```
 
 #### Step 4: Verify Setup
 
-Start a new Claude Code conversation. If any monitors are down, you'll see:
-```
-==========================================
-STATUS ALERT: 1 monitor(s) DOWN
-Down: NTO HomePage
-Status page: https://stats.uptimerobot.com/Zk2EbUnM73
-==========================================
+1. **Test cron script manually** (this will invoke Claude CLI):
+```bash
+.claude/scripts/status-monitor-cron.sh
+cat /tmp/monitor-status.json
 ```
 
-### How It Works
+Expected output:
+```json
+{"up": 21, "down": 1, "paused": 1, "down_names": "NTO HomePage", "timestamp": "..."}
+```
 
-1. **On each prompt submit**, the hook script runs
-2. **Fetches status** from the configured status page API
-3. **If monitors are down**, outputs an alert message
-4. **Claude sees the alert** and can proactively inform you or investigate
+2. **Test status line script:**
+```bash
+echo '{"model":{"display_name":"Test"},"cost":{"total_cost_usd":0.05}}' | .claude/scripts/statusline-with-monitors.sh
+```
 
-### Supported Providers
+3. **Restart Claude Code** to load the new status line configuration.
 
-| Provider | API Auto-Detection | Requires |
-|----------|-------------------|----------|
-| UptimeRobot | Yes | `jq` for accurate parsing |
-| PayPal | Yes | - |
-| Google Workspace | Yes | - |
-| AWS Health | No | Playwright (JavaScript SPA) |
+### Status Bar Display
+
+| Display | Meaning |
+|---------|---------|
+| `21 OK` | All 21 monitors are UP (green) |
+| `21 1 (Name)` | 21 UP, 1 DOWN - shows name of down monitor |
+| `21 3` | 21 UP, 3 DOWN (red) |
+| `? stale` | Cache file older than 5 minutes (yellow) |
+| `! error` | API fetch failed (yellow) |
+| `-` | No cache file found |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `STATUS_CACHE_FILE` | `/tmp/monitor-status.json` | Where to store cached status |
+| `CLAUDE_CMD` | `claude` | Path to Claude CLI executable |
+
+### Cache File Format
+
+The cron job writes JSON to the cache file:
+```json
+{
+    "up": 21,
+    "down": 1,
+    "paused": 1,
+    "down_names": "NTO HomePage",
+    "timestamp": "2026-01-15T22:30:00+00:00",
+    "error": false
+}
+```
 
 ### Troubleshooting
 
-**Hook not running:**
-- Check script is executable: `chmod +x .claude/scripts/status-check-hook.sh`
-- Verify `STATUS_PAGE` is set: `echo $STATUS_PAGE`
-- Test manually: `.claude/scripts/status-check-hook.sh`
+**Status bar shows `-`:**
+- Cron job hasn't run yet, or cache file doesn't exist
+- Run manually: `.claude/scripts/status-monitor-cron.sh`
+- Check cache: `cat /tmp/monitor-status.json`
 
-**No output even when monitors are down:**
-- Ensure `jq` is installed for UptimeRobot: `apt install jq` or `brew install jq`
-- Check API endpoint works: `curl -s "$(get_api_url $STATUS_PAGE)" | head`
+**Status bar shows `? stale`:**
+- Cron job not running or failing
+- Check cron logs: `grep CRON /var/log/syslog`
+- Verify crontab: `crontab -l`
 
-**AWS not working:**
-- AWS requires Playwright (JavaScript SPA) - hook doesn't support it
-- Use the skill manually: `/status-page-monitoring`
+**Status bar shows `! error`:**
+- Claude CLI failed or returned invalid output
+- Test manually: `.claude/scripts/status-monitor-cron.sh && cat /tmp/monitor-status.json`
+- Check Claude CLI is installed: `which claude`
+- Check Claude CLI auth: `claude --version`
+
+**Status bar not updating:**
+- Claude Code status line updates every 300ms max
+- Restart Claude Code if settings changed
+- Check script is executable: `chmod +x .claude/scripts/statusline-with-monitors.sh`
+
+**Claude CLI not found:**
+- Ensure Claude CLI is in PATH for cron
+- Use full path in cron: `CLAUDE_CMD="/path/to/claude" /path/to/status-monitor-cron.sh`
+
+**jq not found:**
+- Install jq: `apt install jq` or `brew install jq`
+
+### Customization
+
+**Change cache location:**
+```bash
+# In crontab
+*/5 * * * * STATUS_CACHE_FILE="/custom/path/status.json" /path/to/status-monitor-cron.sh
+```
+
+**Specify Claude CLI path:**
+```bash
+# In crontab (if claude not in PATH)
+*/5 * * * * CLAUDE_CMD="/usr/local/bin/claude" /path/to/status-monitor-cron.sh
+```
+
+**Extend status bar script** to show additional info by editing `.claude/scripts/statusline-with-monitors.sh`.
 
 ## Success Criteria
 
-- All monitors checked quickly
-- DOWN status clearly highlighted
-- Actionable next steps provided
-- No false positives
-- Historical context included (incident duration)
+- Monitor status always visible in status bar
+- DOWN monitors highlighted in red
+- No latency impact (reads from cache, not API)
+- Stale/error states clearly indicated
+- Works across Claude Code sessions
