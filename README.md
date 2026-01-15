@@ -51,6 +51,16 @@ Comprehensive guide for creating custom widget modules in Magento 2 that can be 
 
 **Use when:** Creating custom widgets, adding CMS-insertable components, building admin widget configuration
 
+### 9. **wiki-docs**
+Document custom Magento 2 site functionality in the project wiki. Systematically captures custom features, modules, configurations, and business logic for client handover and developer onboarding.
+
+**Use when:** After implementing new features, completing migrations, discovering undocumented functionality, during client handover, or when onboarding new developers
+
+### 10. **page-banner-setup**
+Guide for setting up page titles with or without full-width banner backgrounds. Covers two template options: title_banner.phtml (full-width banner with centered title) and title.phtml (standard title). Includes layout XML patterns, CSS recommendations, and decision tree for choosing the right template.
+
+**Use when:** Creating custom CMS pages, calculator pages, landing pages with hero sections, or any page requiring custom title treatment with or without background images
+
 ## How to Check If Skills Are Loaded
 
 ### Method 1: Use the Skill Tool (Direct Check)
