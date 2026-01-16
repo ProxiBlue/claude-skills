@@ -1,12 +1,16 @@
 ---
 name: status-page-monitoring
-description: Check status pages for down monitors and alert immediately. Supports UptimeRobot, PayPal, and other status page providers via direct API fetch or MCP.
+description: Check status pages for down monitors and alert immediately. Uses curl + jq for accurate API parsing. Supports UptimeRobot, PayPal, and other status page providers.
 ---
 
 # Status Page Monitoring Skill
 
 ## Overview
-This skill checks the status of all monitored services and alerts immediately if any monitor is showing DOWN status. Supports multiple status page providers via direct API endpoints or MCP tools.
+This skill checks the status of all monitored services and alerts immediately if any monitor is showing DOWN status.
+
+**Primary method:** `curl + jq` for accurate JSON parsing (avoids WebFetch AI summarization errors)
+
+Supports multiple status page providers via direct API endpoints.
 
 ## When to Use This Skill
 - User runs `/status-page-monitoring`
@@ -16,19 +20,46 @@ This skill checks the status of all monitored services and alerts immediately if
 
 ## Monitoring Workflow
 
+**IMPORTANT: Do NOT read scripts or search for configuration files.** This skill provides all the information you need.
+
 ### Step 1: Check Monitor Status
 
-#### Option A: Direct API Fetch (Preferred when MCP unavailable)
-Many status pages load data dynamically via JavaScript. If fetching the HTML page returns empty/loading state, try the API endpoint directly.
+> **CRITICAL: Use curl + jq for accurate results!**
+> WebFetch AI summarization is unreliable for parsing status data. Always use curl + jq to fetch and parse API endpoints directly.
 
-**Workflow:**
-1. Try fetching the status page URL first
-2. If data is missing/loading, use the known API pattern for that provider
-3. Fetch the API endpoint directly to get JSON data
+#### Option A: curl + jq (PREFERRED - Most Accurate)
+
+Use Bash with curl and jq to fetch raw API data and parse it directly. This avoids AI summarization errors.
+
+**UptimeRobot Example:**
+```bash
+# Fetch and parse UptimeRobot status
+curl -s "https://stats.uptimerobot.com/api/getMonitorList/Zk2EbUnM73" | jq -r '.psp.monitors[] | "\(.name): \(.statusClass)"' | sort
+```
+
+**Status class mapping:**
+- `success` = UP
+- `danger` = DOWN
+- `paused` = PAUSED
+
+**Count by status:**
+```bash
+# Count monitors by status
+curl -s "https://stats.uptimerobot.com/api/getMonitorList/Zk2EbUnM73" | jq -r '
+  .psp.monitors | group_by(.statusClass) |
+  map({status: .[0].statusClass, count: length}) |
+  .[] | "\(.status): \(.count)"'
+```
+
+**Get DOWN monitors only:**
+```bash
+# List only DOWN monitors
+curl -s "https://stats.uptimerobot.com/api/getMonitorList/Zk2EbUnM73" | jq -r '.psp.monitors[] | select(.statusClass == "danger") | .name'
+```
 
 ### Known API Patterns by Provider
 
-#### UptimeRobot
+#### UptimeRobot (Primary - This Project)
 ```
 Status page: https://stats.uptimerobot.com/{PAGE_ID}
 API endpoint: https://stats.uptimerobot.com/api/getMonitorList/{PAGE_ID}
@@ -36,84 +67,90 @@ API endpoint: https://stats.uptimerobot.com/api/getMonitorList/{PAGE_ID}
 Example: `https://stats.uptimerobot.com/api/getMonitorList/Zk2EbUnM73`
 
 #### PayPal Status
-```
-Status page: https://paypal-status.com/product/production
-API endpoint: https://paypal-status.com/api/v1/components
+```bash
+# Fetch PayPal component status
+curl -s "https://paypal-status.com/api/v1/components" | jq -r '.[] | "\(.name): \(.status)"'
 ```
 Returns all PayPal services: Checkout, APIs, Account Management, Braintree, Venmo, etc.
 
 #### Atlassian Statuspage (Generic)
-Many services use Atlassian Statuspage. Try these endpoints:
-```
-/api/v2/summary.json
-/api/v2/components.json
-/api/v2/status.json
+Many services use Atlassian Statuspage. Try these endpoints with curl + jq:
+```bash
+# Summary endpoint
+curl -s "https://status.example.com/api/v2/summary.json" | jq -r '.components[] | "\(.name): \(.status)"'
+
+# Components endpoint
+curl -s "https://status.example.com/api/v2/components.json" | jq -r '.components[] | "\(.name): \(.status)"'
+
+# Status endpoint (simple)
+curl -s "https://status.example.com/api/v2/status.json" | jq -r '.status.description'
 ```
 
-#### AWS Health Dashboard (Requires Playwright)
+#### AWS Health Dashboard
 ```
 Status page: https://health.aws.amazon.com/health/status
-API endpoint: NONE - JavaScript SPA, requires browser rendering
 ```
-AWS Health Dashboard has no public API. Must use Playwright MCP (see Option C below).
+AWS Health Dashboard is JavaScript-heavy. Try using lynx if installed:
+```bash
+lynx -dump "https://health.aws.amazon.com/health/status" 2>/dev/null | grep -E "(disruption|degraded|operational)"
+```
 
-**Key indicators in page snapshot:**
-- `Open and recent issues (0)` = No current issues
-- `No recent issues` heading = All systems operational
-- Look for `disruption` or `degraded` in service rows
+If lynx is not available, use WebFetch as a fallback (less reliable).
 
 #### Unknown Provider
-If provider is unknown, try these common patterns in order:
-1. `/api/v1/components`
-2. `/api/v2/components.json`
-3. `/api/v2/summary.json`
-4. `/api/status`
-
-If all API patterns fail, use Playwright (Option C).
-
-#### Option B: UptimeRobot MCP Tools
-If MCP is available, get the schema then call the list-monitors tool:
+If provider is unknown, try these common API patterns with curl:
 ```bash
-mcp-cli info uptimerobot/list-monitors
-mcp-cli call uptimerobot/list-monitors '{"limit": 100}'
+# Try in order:
+curl -s "https://status.example.com/api/v1/components" | jq '.'
+curl -s "https://status.example.com/api/v2/components.json" | jq '.'
+curl -s "https://status.example.com/api/v2/summary.json" | jq '.'
+curl -s "https://status.example.com/api/status" | jq '.'
 ```
 
-#### Option C: Playwright MCP (For JavaScript-heavy pages)
-Use Playwright when status pages require JavaScript rendering (e.g., AWS Health Dashboard).
+#### Option B: WebFetch (Fallback Only)
+Use WebFetch only when:
+- No API endpoint is known
+- curl + jq approach doesn't work for the provider
 
-**Workflow:**
+**WARNING:** WebFetch uses AI summarization which can misinterpret status data. Always verify results if using WebFetch.
+
+#### Option C: Text Browsers (For JavaScript-heavy pages)
+For pages that require JavaScript rendering and have no API:
 ```bash
-# 1. Check schemas first
-mcp-cli info playwright/browser_navigate
-mcp-cli info playwright/browser_snapshot
+# Try lynx (preferred)
+lynx -dump "https://status.example.com" 2>/dev/null
 
-# 2. Navigate to status page
-mcp-cli call playwright/browser_navigate '{"url": "https://health.aws.amazon.com/health/status"}'
+# Or w3m
+w3m -dump "https://status.example.com" 2>/dev/null
 
-# 3. Wait for content to load
-mcp-cli call playwright/browser_wait_for '{"time": 3}'
-
-# 4. The snapshot is returned automatically - search for status indicators
-# Look for: "Open and recent issues", "disruption", "degraded", "No recent issues"
-
-# 5. Close browser when done
-mcp-cli call playwright/browser_close '{}'
+# Or links
+links -dump "https://status.example.com" 2>/dev/null
 ```
 
-**Note:** If Playwright browser is not installed, run:
+**Note:** Install text browsers if needed:
 ```bash
-npx playwright install chrome
+apt install lynx    # Debian/Ubuntu
+brew install lynx   # macOS
 ```
 
 ### Step 2: Identify Down Monitors
-From the JSON response, look for monitors with `"status": "DOWN"`.
 
-Extract for each monitor:
-- Monitor name
-- Monitor URL
-- Current status
-- How long it's been in current state (`currentStateDuration`)
-- Last incident ID
+For UptimeRobot, use this command to get only DOWN monitors:
+```bash
+curl -s "https://stats.uptimerobot.com/api/getMonitorList/Zk2EbUnM73" | jq -r '
+  .psp.monitors[] | select(.statusClass == "danger") |
+  "DOWN: \(.name)"'
+```
+
+For a full summary with counts:
+```bash
+curl -s "https://stats.uptimerobot.com/api/getMonitorList/Zk2EbUnM73" | jq -r '
+  (.psp.monitors | length) as $total |
+  (.psp.monitors | map(select(.statusClass == "success")) | length) as $up |
+  (.psp.monitors | map(select(.statusClass == "danger")) | length) as $down |
+  (.psp.monitors | map(select(.statusClass == "paused")) | length) as $paused |
+  "Total: \($total) | UP: \($up) | DOWN: \($down) | PAUSED: \($paused)"'
+```
 
 ### Step 3: Alert Format
 
@@ -262,10 +299,12 @@ Running this skill via cron invokes Claude CLI, which consumes API credits. Plan
 | Component              | Tokens       |
 |------------------------|--------------|
 | Prompt + skill context | ~2,000-4,000 |
-| WebFetch tool call     | ~100         |
-| WebFetch result        | ~300-500     |
+| Bash (curl + jq) call  | ~50          |
+| Bash result            | ~100-200     |
 | JSON output            | ~50          |
-| **Total**              | **~3,000-5,000** |
+| **Total**              | **~2,500-4,500** |
+
+*Note: curl + jq uses fewer tokens than WebFetch since it returns raw data without AI summarization overhead.*
 
 #### Cost Per Check (Claude Sonnet Pricing)
 
@@ -297,7 +336,7 @@ Running this skill via cron invokes Claude CLI, which consumes API credits. Plan
 - Use longer intervals (15-30 min) for non-critical monitoring
 - Consider using free UptimeRobot email alerts as primary notification
 - Use this cron integration for status bar visibility, not primary alerting
-- Playwright-based checks (AWS, etc.) cost more due to additional tool calls
+- curl + jq is more cost-effective than WebFetch (fewer tokens, more accurate)
 
 #### Step 3: Configure Claude Code Status Line
 
