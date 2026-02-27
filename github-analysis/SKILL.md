@@ -9,7 +9,7 @@ description: Systematically analyze GitHub tickets with proper local reproductio
 This skill provides a comprehensive, systematic approach to analyzing GitHub tickets. It ensures issues are properly reproduced in the local development environment before proposing solutions, preventing wasted effort on cache issues, environment differences, or missing data.
 
 ## When to Use This Skill
-- User asks to "analyze", "debug", "fix", or "investigate" a GitHub ticket/issue
+- User asks to "analyze", "analyse", "debug", "fix", or "investigate" a GitHub ticket/issue
 - User provides a GitHub issue number for investigation
 - User asks about a specific bug reported in GitHub
 - User requests help with reproducing an issue from a ticket
@@ -22,6 +22,7 @@ Many apparent bugs are actually:
 - Database differences between environments
 - Missing media files
 - Environment configuration differences
+- you must work on the live branch. If you are not on the live branch with edited files. stop and warn
 
 ## GitHub Ticket Analysis Workflow
 
