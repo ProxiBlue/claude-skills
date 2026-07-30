@@ -1,251 +1,110 @@
-# Use the Magento Skills in Claude
+# proxiblue-skills
 
-This folder contains specialized Magento 2 development skills that extend Claude Code's capabilities with domain-specific knowledge for Magento 2 / Mage-OS development, particularly for Hyvä Themes projects. They have been created specifically during an ongoing task for a complex magento 1 to magento 2 migration project, to allow claude to migrate code more consistently and using Hyva conventions. It is an ongoing Work In Progress
+Specialized skill library for Magento 2 / Mage-OS / Hyvä Themes development, plus general-purpose audit, billing, and diagnostic skills. Authored during an ongoing M1→M2 migration project and refined across multiple DDEV environments.
 
-There are some environment specific entries, for example paths to exampel files which is my dev environment. I don;t have enough knowledge yet on skills definition to know how to make that more dynamic. so check before use.
+Skills are reusable, context-aware prompt packs that guide Claude through complex, repeatable tasks. Each skill is a directory containing a `SKILL.md` file with instructions, examples, and rules.
 
+## How these skills get loaded
 
-## What Are Skills?
+**These skills are NOT mounted into projects by name.** They are delivered as a **Claude Code plugin** through the standard plugin layer:
 
-Skills are reusable, context-aware prompts that guide Claude through complex, multi-step tasks. Each skill is stored in its own folder with a `SKILL.md` file containing specialized instructions, examples, and best practices.
+- Source on host: `~/claude-plugins-central/seed/marketplaces/proxiblue-skills/skills/`
+- Bind-mounted **read-only** into every DDEV container via the existing `plugins-seed` mount at `/var/www/html/.claude/plugins-seed:ro`
+- Auto-discovered by Claude Code as plugin `proxiblue-skills@proxiblue-skills` (enabled by default in `~/claude-skills-central/settings.json`)
 
-## Available Magento Skills
+No per-project mount, no `.claude/skills:ro` overlay. Project-local `.claude/skills/` stays writable.
 
-### 1. **github-analysis**
-Systematically analyzes GitHub tickets with proper local reproduction. Automatically substitutes production URLs with local DDEV hosts, ensures database sync, downloads missing assets, and reproduces issues locally before proposing solutions.
+### Editing skills
 
-**Use when:** Analyzing GitHub tickets, debugging reported issues, investigating bugs, reproducing problems
+The host directory `~/claude-skills-central/skills` is a **symlink** to this plugin's `skills/` directory. Editing `~/claude-skills-central/skills/<skill>/SKILL.md` writes through to the plugin's real location. The existing edit workflow is preserved; the symlink only matters for path resolution.
 
-### 2. **analyze-m1-module-for-migration**
-Systematically analyzes a Magento 1 module to determine its purpose, usage, and migration requirements for Magento 2. Helps decide whether to migrate, find alternatives, or skip the module.
+The plugin's `skills/` is its own git repo (history preserved from the original `claude-skills-central/skills` repo). Commit + push edits from there.
 
-**Use when:** Planning M1 to M2 migration, evaluating legacy modules
+### Per-project opt-out
 
-### 3. **create-backend-controller**
-Creates a backend (adminhtml) controller action in Magento 2 with proper ACL, routing, authorization, and admin UI integration.
+To disable this plugin in a specific project, override `enabledPlugins.proxiblue-skills@proxiblue-skills` to `false` in that project's settings.json. The plugin layer is always RO by design — no mount surgery needed.
 
-**Use when:** Building admin pages, AJAX endpoints, form handlers, or mass actions
+## Skills in this plugin
 
-### 4. **create-frontend-controller**
-Creates a frontend controller action in Magento 2 for the storefront with proper routing, dependency injection, and response handling.
+### Magento / Hyvä development
 
-**Use when:** Building custom frontend pages, AJAX endpoints, form submission handlers, or API-like endpoints for JavaScript
+- `analyze-m1-module-for-migration` — assess legacy M1 modules for M2 migration
+- `create-backend-controller` — scaffold an admin (adminhtml) controller with ACL, routing, authorization
+- `create-frontend-controller` — scaffold a storefront controller
+- `hyva-module-compatibility` — fix M2 module compatibility with Hyvä (block plugins, KO→Alpine, ViewModels)
+- `hyva-tailwind-integration` — Tailwind + JS integration in Hyvä themes
+- `magento-controller-refactor` — modernize deprecated `Action` controllers to HTTP-verb interfaces (PHP 8.3+)
+- `magento2-widget-creation` — build CMS-insertable widget modules
+- `page-banner-setup` — page-title templates with/without banner backgrounds
+- `email-theme-styling` — Magento transactional email theming
 
-### 5. **hyva-module-compatibility**
-Identify and fix Magento 2 module compatibility issues with Hyvä Themes. Covers block plugin bypasses, RequireJS/Knockout replacements, ViewModels, and Alpine.js integration for modules that work in admin but fail on Hyvä frontend.
+### Audit, diagnostic, and quality
 
-**Use when:** Modules work in admin but fail on Hyvä frontend, JavaScript features missing or broken
+- `audit-loop` — repeated review / fix-up loop on a changeset
+- `cache-diagnostic` — diagnose Magento cache misses / corruption
+- `code-quality-audit` — PHPCS / PHPStan / PHPMD sweep with prioritized fixes
+- `magento-diagnostic` — broad project health diagnostic
+- `database-query-analysis` — slow-query / EXPLAIN inspection via MCP
+- `security-scan` — basic security review of pending changes
+- `server-scan` — host-level health/audit
 
-### 6. **hyva-tailwind-integration**
-Comprehensive guidance on integrating Tailwind CSS and JavaScript in Hyvä Themes, including configuration merging, module registration, and build processes.
+### Workflow / orchestration
 
-**Use when:** Adding custom Tailwind styles, creating new Hyvä modules, or debugging Tailwind builds
+- `agent-teams` — multi-agent orchestration patterns
+- `caveman` — terse-output mode for the current session
+- `github-analysis` — systematic ticket reproduction (URL substitution, DB sync, asset download)
+- `publish-test-reports` — publish Playwright reports to per-client GitHub Pages
+- `status-page-monitoring` — wire up UptimeRobot / external status feeds
+- `sync-vector-db` — refresh context-please / vector index after schema change
+- `wiki-docs` — capture custom site functionality in project wiki
 
-### 7. **magento-controller-refactor**
-Scans and refactors deprecated Magento 2 controller patterns to modern HTTP verb interfaces. Updates controllers that extend deprecated `Action` base class to PHP 8.3+ compatible patterns.
+### Billing
 
-**Use when:** Modernizing controllers, upgrading to PHP 8.3+, or fixing deprecation warnings
+- `billing-invoice` — Xero invoicing addendum (rules, AI-billing format, deploy-status checks)
 
-### 8. **magento2-widget-creation**
-Comprehensive guide for creating custom widget modules in Magento 2 that can be inserted into CMS pages and blocks. Covers module structure, widget configuration, templates, JavaScript, CSS, and form submission handling.
+## How to use a skill
 
-**Use when:** Creating custom widgets, adding CMS-insertable components, building admin widget configuration
+### Direct invocation
 
-### 9. **wiki-docs**
-Document custom Magento 2 site functionality in the project wiki. Systematically captures custom features, modules, configurations, and business logic for client handover and developer onboarding.
+```
+Use the hyva-tailwind-integration skill to add custom button styles
+```
 
-**Use when:** After implementing new features, completing migrations, discovering undocumented functionality, during client handover, or when onboarding new developers
+### Implicit invocation
 
-### 10. **page-banner-setup**
-Guide for setting up page titles with or without full-width banner backgrounds. Covers two template options: title_banner.phtml (full-width banner with centered title) and title.phtml (standard title). Includes layout XML patterns, CSS recommendations, and decision tree for choosing the right template.
+Claude auto-invokes a skill when the conversation matches its `description` frontmatter.
 
-**Use when:** Creating custom CMS pages, calculator pages, landing pages with hero sections, or any page requiring custom title treatment with or without background images
+### Check what's loaded
 
-## How to Check If Skills Are Loaded
-
-### Method 1: Use the Skill Tool (Direct Check)
-In Claude Code, simply type:
+In a Claude session:
 ```
 list skills
 ```
 
-You should see output listing all available skills with their descriptions.
+## Adding a new skill
 
-### Method 2: Try Using a Skill
-Simply ask Claude to use a skill by name:
-```
-Use the hyva-tailwind-integration skill
-```
-
-If the skill is loaded, Claude will activate it and follow its instructions. If not loaded, Claude will indicate the skill is not available.
-
-### Method 3: Check the File System
-Skills are loaded automatically if they exist in the `.claude/skills/` directory. Each skill must have:
-- A folder with a kebab-case name (e.g., `hyva-tailwind-integration`)
-- A `SKILL.md` file inside that folder
-
-You can verify this structure with:
-```bash
-ls -la .claude/skills/
-```
-
-## How to Load These Skills Into Any Claude Instance
-
-### Option 1: Copy Skills to Another Project (Recommended)
-1. Copy the entire `.claude/skills/` folder to your target project:
-   ```bash
-   cp -r /path/to/ntotank/.claude/skills /path/to/your-project/.claude/
-   ```
-
-2. Claude Code will automatically detect and load all skills when you start a session in that project.
-
-3. Verify by running `list skills` in Claude Code.
-
-### Option 2: Use Skills as a Git Submodule
-If you want to keep skills synchronized across multiple projects:
-
-1. Initialize the skills folder as a Git repository (if not already done):
-   ```bash
-   cd .claude/skills
-   git init
-   git add .
-   git commit -m "Initial skills repository"
-   ```
-
-2. Push to a remote repository (e.g., GitHub):
-   ```bash
-   git remote add origin <your-skills-repo-url>
-   git push -u origin main
-   ```
-
-3. In other projects, add as a submodule:
-   ```bash
-   cd /path/to/other-project
-   mkdir -p .claude
-   git submodule add <your-skills-repo-url> .claude/skills
-   git submodule update --init --recursive
-   ```
-
-### Option 3: Symlink for Local Development
-If you work on multiple Magento projects locally:
-
-1. Keep skills in a central location:
-   ```bash
-   mkdir -p ~/magento-claude-skills
-   cp -r .claude/skills/* ~/magento-claude-skills/
-   ```
-
-2. Create symlinks in each project:
-   ```bash
-   cd /path/to/other-project
-   mkdir -p .claude
-   ln -s ~/magento-claude-skills .claude/skills
-   ```
-
-## How to Use Skills
-
-### Direct Invocation
-Simply ask Claude to use the skill by name:
-```
-Use the hyva-tailwind-integration skill to help me add custom button styles
-```
-
-### Implicit Invocation
-Claude can automatically invoke skills when it detects relevant context:
-```
-I need to create a backend controller for managing custom product attributes
-```
-Claude may automatically use the `create-backend-controller` skill.
-
-### With Specific Context
-Provide additional context for better results:
-```
-Use the analyze-m1-module-for-migration skill to analyze the Uptactics_TextReplacement module at /path/to/m1/module
-```
-
-## Skill File Structure
-
-Each skill follows this structure:
-
-```
-.claude/skills/
-├── skill-name/
-│   └── SKILL.md          # Main skill instructions
-└── README.md             # This file
-```
-
-The `SKILL.md` file contains:
-- **Purpose**: What the skill does
-- **When to Use**: Triggering conditions
-- **Instructions**: Step-by-step guidance
-- **Examples**: Code samples and patterns
-- **Best Practices**: Domain-specific recommendations
-
-## Creating Your Own Skills
-
-To create a custom skill:
-
-1. Create a new folder in `.claude/skills/`:
-   ```bash
-   mkdir -p .claude/skills/my-custom-skill
-   ```
-
-2. Create a `SKILL.md` file with your instructions:
-   ```bash
-   touch .claude/skills/my-custom-skill/SKILL.md
-   ```
-
-3. Write clear, actionable instructions in the `SKILL.md` file:
+1. `mkdir ~/claude-skills-central/skills/my-new-skill` (this resolves through the symlink into the plugin)
+2. Create `SKILL.md` with frontmatter:
    ```markdown
-   # My Custom Skill
-
-   ## Purpose
-   Describe what this skill does
-
-   ## When to Use
-   Specify triggering conditions
-
-   ## Instructions
-   Step-by-step guidance...
+   ---
+   name: my-new-skill
+   description: One-line on when this skill should activate.
+   ---
    ```
-
-4. Restart Claude Code or start a new conversation to load the skill.
+3. Commit in the plugin's `skills/` git repo.
+4. `ddev restart` is **not** required — Claude Code picks up new skills on next session start. (Existing sessions need a restart.)
 
 ## Troubleshooting
 
-### Skills Not Loading
-- **Check file structure**: Ensure each skill has a `SKILL.md` file in its folder
-- **Check file permissions**: Skills folder must be readable by Claude Code
-- **Restart Claude**: Start a new conversation to reload skills
-- **Verify location**: Skills must be in `.claude/skills/` relative to project root
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Skill doesn't appear in `list skills` | Plugin not enabled in current project | Confirm `proxiblue-skills@proxiblue-skills: true` in settings.json (central or project) |
+| Skill loads but doesn't trigger | `description` frontmatter too narrow | Edit the description to cover the user's likely phrasings |
+| Edit-in-place not reflected | Path is going through stale path cache | Restart the Claude session; symlink resolution happens at session start |
+| Permission error writing into `.claude/skills/` | Some other RO mount overlapping that path | Check `docker-compose.ai.mounts.yaml` for stray `.claude/skills:ro` lines |
 
-### Skills Not Working as Expected
-- **Review SKILL.md**: Ensure instructions are clear and actionable
-- **Provide context**: Give Claude enough information to apply the skill correctly
-- **Check dependencies**: Some skills may require specific files or configurations to exist
+## Notes
 
-### Skill Conflicts
-- **Naming**: Ensure skill folder names are unique and kebab-case
-- **Scope**: Keep skill instructions focused on a single responsibility
-- **Precedence**: If multiple skills could apply, explicitly name the one you want
-
-## Contributing
-
-To improve or add new Magento skills:
-
-1. Follow the existing folder structure
-2. Write clear, actionable instructions
-3. Include examples and best practices
-4. Test the skill with various scenarios
-5. Document any dependencies or prerequisites
-
-## Resources
-
-- [Claude Code Documentation](https://docs.claude.com/en/docs/claude-code)
-- [Magento 2 Developer Documentation](https://developer.adobe.com/commerce/php/development/)
-- [Hyvä Themes Documentation](https://docs.hyva.io/)
-- [Mage-OS Documentation](https://mage-os.org/)
-
----
-
-**Note:** These skills are specifically designed for Magento 2 / Mage-OS development with Hyvä Themes. They may reference project-specific patterns and conventions from the NTOTanks project.
+- Skills are not Magento-specific by file structure — they're just markdown packs. Mix Magento and non-Magento freely under this plugin.
+- Some skills reference paths or projects from the dev environment they were authored in (e.g. NTOTanks). Treat those as examples, not gospel.
+- Work in progress. PRs / suggestions welcome via the git repo this plugin's `skills/` directory tracks.

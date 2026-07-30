@@ -1,6 +1,7 @@
 ---
 name: audit-loop
 description: Iterative audit-fix loop using Ralph Wiggum. Spawns parallel performance, security, and code quality audits on currently edited files, fixes Critical/High issues, and re-audits until clean. Invoke with /audit-loop.
+disable-model-invocation: true
 ---
 
 # Audit Loop Skill

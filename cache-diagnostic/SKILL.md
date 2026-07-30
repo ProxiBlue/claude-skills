@@ -1,6 +1,7 @@
 ---
 name: cache-diagnostic
 description: Specialized Magento 2 cache diagnostic skill for analyzing cache configuration, performance, hit rates, and optimization opportunities across all cache layers (Full Page Cache, Application Cache, Redis, Varnish).
+disable-model-invocation: true
 ---
 
 This skill provides deep cache analysis and optimization recommendations for Magento 2.

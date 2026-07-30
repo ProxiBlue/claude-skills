@@ -1,12 +1,13 @@
 ---
 name: agent-teams
-description: Spawn a pre-configured team of Claude Code agents for parallel Magento 2 development. Available teams: issue-resolution, feature-development, module-development, audit. Each team has 4 specialized teammates working in parallel.
+description: Spawn a pre-configured team of Claude Code agents for parallel Magento 2 development. Available teams: issue-resolution, feature-development, module-development, audit, quorum-analysis, team_security (21-agent security quorum). Each team has specialized teammates working in parallel.
+disable-model-invocation: true
 ---
 
 # Agent Teams Skill
 
 ## Overview
-Spawns a coordinated team of Claude Code agents based on pre-built team templates optimized for Magento 2 development workflows. Each team has 4 specialized teammates with defined roles, file ownership boundaries, and coordination strategies.
+Spawns a coordinated team of Claude Code agents based on pre-built team templates optimized for Magento 2 development workflows. Each team has specialized teammates with defined roles, file ownership boundaries, and coordination strategies.
 
 ## When to Use This Skill
 - User asks to "swarm", "team up", or "use a team" for a task
@@ -40,6 +41,29 @@ Spawns a coordinated team of Claude Code agents based on pre-built team template
 **Teammates**: Performance Analyst (opus) + Security Analyst (opus) + Code Quality (sonnet) + Fix Implementer (sonnet)
 **Flow**: All 3 analysts in parallel → Fix Implementer addresses critical findings → Done
 
+### 5. `quorum-analysis` - Quorum Analysis Team
+**Use when**: Analyzing a ticket or issue from multiple perspectives before writing code; need consensus-driven recommendations; want to understand root cause, architecture impact, and test strategy before committing to a solution
+**Teammates**: Moderator (opus) + Code Analyst (opus) + Architecture Analyst (opus) + QA Analyst (sonnet)
+**Flow**: All 3 analysts investigate in parallel → Moderator cross-shares findings → Analysts challenge/reinforce → Moderator synthesizes consensus recommendation
+**Output**: Analysis and recommendation only — no code is written
+
+### 6. `team_security` - Security Quorum Team (21 specialists + 1 moderator)
+**Use when**: Pre-release security sign-off, post-incident retrospective, or compliance audit where you need multi-angle coverage with documented per-domain verdicts and dissent.
+**Teammates**: 7 trios × 3 specialists (Static Analyst / Adversarial Tester / Defensive Auditor) covering OWASP Top 10 domains:
+  1. Injection (SQL/NoSQL/Command/Template)
+  2. XSS & CSP
+  3. Access Control & Authorization (IDOR, privilege escalation)
+  4. Cryptography & Secrets
+  5. Vulnerable & Outdated Components (CVE lookup via online resources — NVD/OSV/GitHub Advisory DB)
+  6. Authentication & Session Management
+  7. CSRF / SSRF / Request Integrity
+**Plus**: Moderator (opus) — adopts the devils-advocate stance and synthesizes a cross-trio report.
+**Flow**: 21 specialists investigate in parallel → each trio reaches 2-of-3 consensus PASS/FAIL/NEEDS-REVIEW → Moderator sweeps for cross-trio compound vulnerabilities → final overall verdict
+**Skills woven in**: workflow-security-audit, security-scan, server-scan, database-query-analysis, magento-diagnostic, code-quality-audit, audit-loop (post-audit fix loop).
+**Agents woven in**: devils-advocate (moderator mindset), gitnexus-reviewer (static-analyst impact propagation), standards-enforcer (defensive-auditor pass-then-verify discipline).
+**Cost**: 22 opus/sonnet agents in parallel — expensive. Use the lighter `audit` team for everyday spot checks.
+**Output**: Per-trio verdicts + cross-trio compound findings + overall PASS/FAIL/NEEDS-REVIEW report. No code written.
+
 ## Execution Steps
 
 ### Step 1: Identify the Team Type
@@ -51,6 +75,8 @@ Read the appropriate team template file:
 - `.claude/teams/feature-development.md`
 - `.claude/teams/module-development.md`
 - `.claude/teams/audit-team.md`
+- `.claude/teams/quorum-analysis-team.md`
+- `.claude/teams/team_security.md`
 
 ### Step 3: Collect Required Variables
 Each template has placeholder variables. Gather these from the user or context:
@@ -69,6 +95,13 @@ Each template has placeholder variables. Gather these from the user or context:
 
 **audit**:
 - `{AUDIT_TARGET}` - Module path or scope to audit (e.g., "app/code/Uptactics/CustomModule" or "all custom modules")
+
+**quorum-analysis**:
+- `{ISSUE_DESCRIPTION}` - The full issue/ticket description to analyze
+
+**team_security**:
+- `{AUDIT_TARGET}` - Code path, module, branch diff, or scope to audit (e.g. "app/code/Uptactics/SomeModule", "branch diff vs live", "the whole project")
+- `{STORY_CONTEXT}` (optional) - Story/ticket context when auditing a specific change
 
 ### Step 4: Enter Delegate Mode
 Press `Shift+Tab` to enter Delegate Mode. This prevents you (the lead) from writing code directly, keeping you focused on coordination.

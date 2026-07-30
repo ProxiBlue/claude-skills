@@ -1,6 +1,7 @@
 ---
 name: wiki-docs
 description: Document custom Magento 2 site functionality in the project wiki. Systematically captures custom features, modules, configurations, and business logic for client handover and developer onboarding.
+disable-model-invocation: true
 ---
 
 # Wiki Documentation Skill

@@ -1,6 +1,7 @@
 ---
 name: hyva-module-compatibility
 description: Identify and fix Magento 2 module compatibility issues with Hyvä Themes. Covers block plugin bypasses, RequireJS/Knockout replacements, ViewModels, and Alpine.js integration for modules that work in admin but fail on Hyvä frontend.
+disable-model-invocation: true
 ---
 
 # Hyvä Module Compatibility Skill

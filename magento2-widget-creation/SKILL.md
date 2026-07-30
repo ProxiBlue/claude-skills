@@ -1,6 +1,7 @@
 ---
 name: magento2-widget-creation
 description: Comprehensive guide for creating custom widget modules in Magento 2 that can be inserted into CMS pages and blocks. Covers module structure, widget configuration, templates, JavaScript, CSS, and form submission handling for non-Hyvä themes.
+disable-model-invocation: true
 ---
 
 # Magento 2 Widget Creation for CMS Pages

@@ -1,6 +1,7 @@
 ---
 name: status-page-monitoring
 description: Check status pages for down monitors and alert immediately. Uses curl + jq for accurate API parsing. Supports UptimeRobot, PayPal, and other status page providers.
+disable-model-invocation: true
 ---
 
 # Status Page Monitoring Skill

@@ -1,6 +1,7 @@
 ---
 name: code-quality-audit
 description: Automated code quality audit skill that runs PSR-12 compliance checks, phpstan static analysis, phpcs code style validation, and phpmd mess detection for Magento 2 code.
+disable-model-invocation: true
 ---
 
 This skill automates comprehensive code quality checks for Magento 2 projects.

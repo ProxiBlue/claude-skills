@@ -1,6 +1,7 @@
 ---
 name: security-scan
 description: Comprehensive Magento 2 security scanning skill that checks for vulnerabilities, misconfigurations, outdated dependencies, security patches, and compliance with security best practices.
+disable-model-invocation: true
 ---
 
 This skill automates security auditing and vulnerability scanning for Magento 2 applications.

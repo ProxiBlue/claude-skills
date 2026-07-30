@@ -1,7 +1,8 @@
 # Page Banner Setup Skill
 
 ## Purpose
-Guide Claude through setting up page titles with or without full-width banner backgrounds in Magento 2 / Hyvä Themes projects. This skill covers the two different title/banner layouts used in the NTO project.
+Guide Claude through setting up page titles with or without full-width banner backgrounds in Magento 2 / Hyvä Themes projects. This skill covers the two different title/banner layouts used in the NTO
+disable-model-invocation: true project.
 
 ## When to Use This Skill
 - Setting up custom CMS pages with banners

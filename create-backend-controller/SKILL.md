@@ -1,6 +1,7 @@
 ---
 name: create-backend-controller
 description: Creates a backend (adminhtml) controller action in Magento 2 with proper ACL, routing, authorization, and admin UI integration. Use when building admin pages, AJAX endpoints, form handlers, or mass actions.
+disable-model-invocation: true
 ---
 
 # Create Backend (Adminhtml) Controller Action

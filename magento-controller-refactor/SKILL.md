@@ -1,6 +1,7 @@
 ---
 name: magento-controller-refactor
 description: Scans and refactors deprecated Magento 2 controller patterns to modern HTTP verb interfaces. Use when modernizing controllers that extend deprecated Action base class or need PHP 8.3+ compatibility.
+disable-model-invocation: true
 ---
 
 # Magento 2 Controller Refactoring Skill

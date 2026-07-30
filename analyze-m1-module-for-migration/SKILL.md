@@ -1,6 +1,7 @@
 ---
 name: analyze-m1-module-for-migration
 description: Systematically analyze a Magento 1 module to determine its purpose, usage, and migration requirements for Magento 2. Use when you need to decide whether to migrate a M1 module, find alternatives, or skip it.
+disable-model-invocation: true
 ---
 
 # Skill: Analyze M1 Module for Migration

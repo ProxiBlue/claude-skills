@@ -1,12 +1,15 @@
 ---
 name: github-analysis
 description: Systematically analyze GitHub tickets with proper local reproduction. Automatically substitutes production URLs with local DDEV hosts, ensures database sync, downloads missing assets, and reproduces issues locally before proposing solutions.
+disable-model-invocation: true
 ---
 
 # GitHub Ticket Analysis Skill
 
 ## Overview
 This skill provides a comprehensive, systematic approach to analyzing GitHub tickets. It ensures issues are properly reproduced in the local development environment before proposing solutions, preventing wasted effort on cache issues, environment differences, or missing data.
+
+Always use the quorum-analysis-team for this task as described in the teams folder
 
 ## When to Use This Skill
 - User asks to "analyze", "analyse", "debug", "fix", or "investigate" a GitHub ticket/issue
@@ -27,18 +30,64 @@ Many apparent bugs are actually:
 ## GitHub Ticket Analysis Workflow
 
 ### Step 1: Read the GitHub Ticket
+Use the `gh` CLI inside the container — it auto-authenticates from `$GH_TOKEN`.
 ```bash
-# Use the GitHub MCP tools to read the issue
-# Capture: title, description, screenshots, URLs, expected vs actual behavior
+# View issue body, labels, comments
+gh issue view <number> --comments
+
+# JSON form when you need to script extraction
+gh issue view <number> --json title,body,labels,comments,url,state
+
+# Other repo (when not run from inside the repo)
+gh issue view <number> -R <owner>/<repo> --comments
 ```
+Capture: title, description, screenshots, URLs, expected vs actual behavior.
 
 **Extract from the ticket:**
 - Issue title and description
 - Any URLs mentioned (production/staging/UAT)
 - Screenshots or images attached
+- **Video attachments / screen recordings** (see Step 1b — you must extract frames)
 - Expected behavior vs actual behavior
 - Steps to reproduce (if provided)
 - Browser/environment details (if mentioned)
+
+### Step 1b: Extract and View Video Attachments
+
+Clients often attach screen recordings (`.mov` / `.mp4` / `.webm`) — these are the
+ground truth for reproduction. You CANNOT view a video directly; extract still
+frames with `ffmpeg` and Read the images. `ffmpeg` + `ffprobe` are installed in the
+web container (via `.ddev/web-build/Dockerfile.ffmpeg`) — run `ffmpeg -version` to
+confirm; if missing, the project's web image needs a rebuild.
+
+**1. Find the video URL** in the issue body/comments. GitHub renders attachments as
+`https://github.com/user-attachments/assets/<uuid>` (modern) or
+`https://user-images.githubusercontent.com/...` (older):
+```bash
+gh issue view <number> --json body,comments -q '.body, (.comments[].body)' \
+  | grep -oE 'https://[^ )"]+(user-attachments/assets/[^ )"]+|\.(mov|mp4|webm))'
+```
+
+**2. Download it** (gh auth covers private-repo assets; follow redirects):
+```bash
+mkdir -p /tmp/ticket-<number>
+curl -sL -H "Authorization: token $GH_TOKEN" "<video-url>" -o /tmp/ticket-<number>/video.mov
+ffprobe -v error -show_entries format=duration -of csv=p=0 /tmp/ticket-<number>/video.mov  # length in seconds
+```
+
+**3. Extract frames** — 1 fps is a sane default; use scene-change detection for
+long recordings to keep only high-signal frames:
+```bash
+mkdir -p /tmp/ticket-<number>/frames
+# Every 1 second:
+ffmpeg -i /tmp/ticket-<number>/video.mov -vf "fps=1" -q:v 2 /tmp/ticket-<number>/frames/frame_%03d.jpg
+# OR only on scene changes (fewer, more meaningful frames):
+ffmpeg -i /tmp/ticket-<number>/video.mov -vf "select='gt(scene,0.3)'" -vsync vfr -q:v 2 /tmp/ticket-<number>/frames/scene_%03d.jpg
+```
+
+**4. Read each `frame_*.jpg`** and note: the failure moment, exact UI state, error
+toasts/modals, network spinners, and the click path. Feed this into the reproduction
+steps below. Clean up with `rm -rf /tmp/ticket-<number>` when done.
 
 ### Step 2: Substitute Production URLs with Local DDEV Host
 **CRITICAL RULE: Always convert production URLs to local equivalents**

@@ -1,6 +1,7 @@
 ---
 name: email-theme-styling
 description: Comprehensive guide for theming and styling Magento 2 transactional emails via theme files, including Hyvä-specific considerations, CSS inlining architecture, and template override patterns.
+disable-model-invocation: true
 ---
 
 # Magento 2 Email Theme & Styling Skill

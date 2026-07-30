@@ -1,6 +1,7 @@
 ---
 name: magento-diagnostic
 description: Comprehensive Magento 2 system diagnostic skill that gathers cache status, index status, module information, configuration, logs, and performance metrics for rapid troubleshooting.
+disable-model-invocation: true
 ---
 
 This skill automates comprehensive Magento 2 system diagnostics for troubleshooting and performance analysis.
