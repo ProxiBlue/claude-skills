@@ -1,6 +1,7 @@
 ---
 name: agent-teams
-description: Spawn a pre-configured team of Claude Code agents for parallel Magento 2 development. Available teams: issue-resolution, feature-development, module-development, audit, quorum-analysis, team_security (21-agent security quorum). Each team has specialized teammates working in parallel.
+description: >-
+  Spawn a pre-configured team of Claude Code agents for parallel Magento 2 development. Available teams: issue-resolution, feature-development, module-development, audit, quorum-analysis, team_security (21-agent security quorum). Each team has specialized teammates working in parallel. Use when the user wants to run parallel agents, assemble a dev team, resolve Magento issues with multiple agents, or coordinate parallel module development.
 disable-model-invocation: true
 ---
 
