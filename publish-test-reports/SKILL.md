@@ -96,7 +96,7 @@ tests/test-reports/publish-report.sh \
 
 **Arguments:**
 1. `site-name` — identifier for this project (e.g. `lcd`, `store-name`)
-2. `report-dir` — path containing `hyva-*-reports/` directories
+2. `report-dir` — path containing one or more `*-reports/` directories (see "Expected report directory structure" below — any suffix works, not just `hyva-`)
 3. `project-dir` — project git root (for branch check + commit ref)
 
 **Example (LCD site):**
@@ -131,20 +131,64 @@ https://<org>.github.io/test-reports/<site>/<date>/ # Specific run
 Test results: https://ittoolsau.github.io/test-reports/lcd/2026-04-27_0830/
 ```
 
+## Known extension pattern — auto-deploy-on-pass (LCD only, NOT template default)
+
+LCD's fork (`ITToolsAU/test-reports`) diverges from the `ProxiBlue/test-reports`
+template: after a successful publish, its `publish-report.sh` ALSO does an
+`git commit --allow-empty` + `git push origin live` in the project repo, then
+posts a "Scheduled to Deploy Live" comment and swaps labels on the GitHub
+issue extracted from recent commit messages. In effect, a green full-suite
+report on `live` becomes an automated production-deploy trigger, not just a
+report publish.
+
+**This is intentionally NOT part of the template or this skill's default
+setup steps.** A green test run does not imply authorization to push to
+production on every project — e.g. pvcpipesupplies's own `CLAUDE.md` states
+"Never push or create a PR without the user's explicit permission", which
+this pattern would violate if blindly copied there. Treat it as a reference
+implementation for a specific automation LCD's owner opted into, not
+something `/pb-skills:publish-test-reports` sets up by default.
+
+If a project genuinely wants this: fork the auto-deploy block from LCD's
+`publish-report.sh` (the part after "Commit and push" in the report-repo
+section) explicitly, confirm it matches that project's own deploy-approval
+rules, and document the opt-in in that project's own CLAUDE.md — don't carry
+it over silently as part of routine template setup.
+
+## Fleet status
+
+As of 2026-08-15, LCD (`ITToolsAU/test-reports`) is the only project actually
+using this — last published run was 2026-05-15 (stale). No other project
+(including pvcpipesupplies) has forked the template or wired this up yet.
+The mechanism and template are fleet-ready; rollout to additional projects is
+a separate, per-project decision (fork the template, clone into
+`tests/test-reports/`, wire a publish step — see Setup above).
+
 ## Expected report directory structure
 
-The publish script expects Playwright's output layout:
+The publish script discovers ANY subdirectory of `<report-dir>` ending in
+`-reports` — the prefix is whatever your Playwright configs name their
+output folders (`hyva-`, `admin-`, `checkout-`, a site-specific app name like
+`pps-`, etc.), not hardcoded to a specific project's naming:
 
 ```
 <report-dir>/
 ├── hyva-admin-reports/
 │   ├── playwright-report/index.html   # HTML report
 │   └── json-reports/json-report.json  # Stats source
-├── hyva-hyva-reports/
+├── admin-default-reports/
 │   └── ...
-└── hyva-default-reports/
+├── pps-admin-reports/                 # multi-bucket projects: one -reports dir per bucket
+│   └── ...
+└── checkout-reports/
     └── ...
 ```
+
+The published suite label is the directory name with the trailing
+`-reports` stripped (e.g. `hyva-admin-reports` → `hyva-admin`) — it is NOT
+assumed to start with `hyva-`. Point `report-dir` at whatever directory
+actually contains your project's `*-reports/` folders (for m2-hyva-playwright
+projects this is usually `tests/m2-hyva-playwright/test-results/<APP_NAME>`).
 
 ## Troubleshooting
 
