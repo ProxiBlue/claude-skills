@@ -94,6 +94,21 @@ rather than taken on the source's own word. Mention it exists if the user
 wants more than the one-liner; every page load auto-refreshes the data in
 the background (see `~/.config/gold-signal/README.md`).
 
+## TradingAgents comparison card
+The dashboard also shows a 4th, independent opinion from TradingAgents (a
+separate multi-agent LLM framework at `~/workspace/proxiblue/trading-agents`,
+local Ollama, no cost) — labeled "comparison only", never folded into the
+gold-signal verdict above. It runs on its own daily cron (not the 30-min
+one — a run takes ~10-15 min locally), so when answering "should I buy gold
+now" you can mention its current Buy/Hold/Sell rating as an aside ("for
+what it's worth, TradingAgents' independent take is also X") but the
+verdict/reason you lead with is always gold-signal's own weighted score —
+don't let the two get conflated into one answer.
+
+To refresh it on request: `~/workspace/proxiblue/trading-agents/venv/bin/python
+~/workspace/proxiblue/trading-agents/run_gold_check.py GLD` — warn the user
+this takes 10-15 minutes before running it interactively.
+
 ## Troubleshooting
 - **A source shows `"ok": false`**: that site likely changed its page
   layout — the regex in `~/.config/gold-signal/engine.py` (functions
