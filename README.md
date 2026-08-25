@@ -53,6 +53,7 @@ To disable this plugin in a specific project, override `enabledPlugins.proxiblue
 - `agent-teams` — multi-agent orchestration patterns
 - `caveman` — terse-output mode for the current session
 - `github-analysis` — systematic ticket reproduction (URL substitution, DB sync, asset download)
+- `gold-buy-signal` — "should I buy gold now" yes/no + reason, consolidated from 3 public prediction sites via a deterministic host engine (`~/.config/gold-signal/`)
 - `publish-test-reports` — publish Playwright reports to per-client GitHub Pages
 - `status-page-monitoring` — wire up UptimeRobot / external status feeds
 - `sync-vector-db` — refresh context-please / vector index after schema change
