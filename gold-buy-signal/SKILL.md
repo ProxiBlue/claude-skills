@@ -1,6 +1,6 @@
 ---
 name: gold-buy-signal
-description: Answer "should I buy gold now" for a short-term micro trade (stop-loss/take-profit style, either direction) with a BUY/SELL/HOLD call and a short reason, weighted across 4 independent sources — GoldPriceWatch AI model, LiteFinance daily technical call, BeCoin multi-factor model, and TradingAgents (local multi-agent LLM debate). Runs a deterministic host-side engine (no LLM parsing needed for the 3 scraped sources) at ~/.config/gold-signal/.
+description: Answer "should I buy gold now" for a short-term micro trade (stop-loss/take-profit style, either direction) with a BUY/SELL/HOLD call and a short reason, weighted across 8 independent sources — 3 scraped prediction sites (GoldPriceWatch, LiteFinance, BeCoin), TradingAgents (local multi-agent LLM debate), and 4 market drivers (real yields via TIP, dollar index, CFTC positioning, intraday momentum). Runs a deterministic host-side engine at ~/.config/gold-signal/.
 disable-model-invocation: true
 ---
 
@@ -10,10 +10,13 @@ disable-model-invocation: true
 Lucas trades gold short-term/micro: small positions with a stop-loss and
 take-profit, in either direction — not a buy-and-hold play. This skill
 answers "should I buy gold now?" with a plain **BUY / SELL / HOLD** call and
-a one-line reason, weighted across 4 independent sources:
+a one-line reason, weighted across 8 independent sources:
 - 3 scraped prediction sites (deterministic, ~20s/run, on a 30-min cron)
 - TradingAgents, a separate multi-agent LLM framework (non-deterministic,
   ~10-15 min/run, on its own daily cron) — see the dedicated section below
+- 4 market drivers (real yields via TIP ETF, US dollar index, CFTC
+  speculator positioning, GC=F intraday momentum) — plain HTTP fetches,
+  same 30-min cadence as the scraped sites
 
 **All the fetching/scoring logic already exists as a deterministic script.**
 Do NOT re-fetch the 3 sites yourself with WebFetch/browser tools and re-derive
@@ -51,14 +54,22 @@ The payload shape:
   "verdict": "BUY" | "SELL" | "HOLD" | "UNKNOWN",
   "agreement": "unanimous bullish" | "unanimous bearish" | "split" | "mixed/neutral",
   "bullish_count": N, "neutral_count": N, "bearish_count": N,
+  "short_term_score": -1.0..1.0,   // today/tomorrow lane — THE one for micro trades
+  "medium_term_score": -1.0..1.0,  // multi-day/weekly lane
   "reason": "one-line explanation, already composed",
   "sources": [ {id, label, url, ok, vote, applied_weight, headline, detail, error}, ... ]
 }
 ```
-`sources` always has 4 entries: `goldpricewatch`, `litefinance`, `becoin`,
-`tradingagents` — same shape, same weighted-vote participation for all 4.
-`tradingagents`'s `detail.full_reasoning` carries its full debate writeup
-when present; the other three don't have that field.
+`sources` has 8 entries: `goldpricewatch`, `litefinance`, `becoin`,
+`tradingagents`, plus drivers `real-rates`, `dxy`, `cot`,
+`intraday-momentum` — same shape, same weighted-vote participation for
+all. `tradingagents`'s `detail.full_reasoning` carries its full debate
+writeup when present.
+
+**When the two lane scores disagree, say so explicitly** — e.g. "overall
+HOLD, but note short-term is bearish while the macro/weekly picture is
+bullish". For Lucas's micro-trade style the short lane is the actionable
+one; a medium-term bullish tilt is context, not an entry signal.
 
 Answer the user directly using `verdict` and `reason` — they're already
 composed, don't second-guess or rewrite the logic. Format per the user's
