@@ -83,14 +83,16 @@ financial advice — don't present it as more certain than it is. A "YES"
 here means "the 3 sources lean bullish right now," not a guarantee.
 
 ## Step 3 (optional): offer the dashboard
-`~/.config/gold-signal/dashboard.html` has the full per-source breakdown
-(raw parsed fields, support/resistance levels, stop-loss levels from
-LiteFinance, scenario probabilities from BeCoin) — mention it exists if the
-user wants more than the one-liner. It's a static file, regenerated on
-every engine run. If they want it viewable over the network rather than
-opened locally, that means starting a server or wiring a persistent one —
-ask first, per the "explicit permission before persistent config" policy;
-don't just start listening on a port unprompted.
+**http://127.0.0.1:8934/** (bookmarked) — served by the `gold-signal-web`
+systemd --user unit, always up. Full per-source breakdown (raw parsed
+fields, support/resistance levels, stop-loss levels from LiteFinance,
+scenario probabilities from BeCoin) plus a **track record** section: each
+source graded against its own later-reported price once its call's horizon
+passes (1 day for LiteFinance/BeCoin, 7 days for GoldPriceWatch) — green/red
+hit-dots per source, so "is this source worth trusting" is visible directly
+rather than taken on the source's own word. Mention it exists if the user
+wants more than the one-liner; every page load auto-refreshes the data in
+the background (see `~/.config/gold-signal/README.md`).
 
 ## Troubleshooting
 - **A source shows `"ok": false`**: that site likely changed its page
