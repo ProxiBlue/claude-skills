@@ -59,6 +59,11 @@ To disable this plugin in a specific project, override `enabledPlugins.proxiblue
 - `sync-vector-db` — refresh context-please / vector index after schema change
 - `wiki-docs` — capture custom site functionality in project wiki
 
+### Deployment
+
+- `deploy-check` — sanctioned pre-push gate for `live` (and other deploy branches): tests, type-check, diff review, explicit confirmation before push
+- `uat-deploy-verify` — reproduce-push-verify cycle for shipping a fix to `uat`: confirm bug reproduces on UAT, push, confirm the Buddy.works deploy actually ran (via `buddy-mcp`), rerun tests to confirm the fix
+
 ### Billing
 
 - `billing-invoice` — Xero invoicing addendum (rules, AI-billing format, deploy-status checks)
