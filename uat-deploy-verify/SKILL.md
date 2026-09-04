@@ -34,26 +34,22 @@ being the exact same test run against two different hosts.
 
 Step 3 is not optional, so this has to work before you push anything.
 
-1. Check whether the `buddy-mcp` plugin is enabled for this project (`list
-   skills` / project `settings.json` `enabledPlugins`). If not installed:
-   ```bash
-   claude plugin install buddy-mcp@buddy-mcp
-   ```
-   (the marketplace is already seeded fleet-wide via
-   `~/claude-plugins-central/seed/marketplaces/buddy-mcp` — no
-   `marketplace add` needed.)
-2. Confirm `BUDDY_TOKEN` reaches the container: host env has it exported, and
-   the project's `.ddev/config.yaml` injects it —
-   ```yaml
-   web_environment:
-       - BUDDY_TOKEN=$BUDDY_TOKEN
-   ```
-   If missing, add it and `ddev restart` (this is a container-env change —
-   confirm you're on the project's LIVE branch equivalent config before
-   editing, per this fleet's ddev-config convention).
-3. Sanity-check the MCP tools actually respond (list pipelines for this
-   project's Buddy workspace) and identify **which pipeline** deploys to
-   UAT. Ask the user if it's not obvious from the project name/history.
+Buddy is fleet-seeded, not per-project-installed: the `buddy` server lives
+in `~/claude-skills-central/mcps/.mcp.json` (same place as `graphiti` /
+`chatroom`), mounted read-only into every DDEV project at
+`.ddev/claude-code/.claude/mcp.json`, and `BUDDY_TOKEN` is wired into every
+project's `.ddev/docker-compose.ai.mounts.yaml` `environment:` block
+(sourced from the host's `~/.config/secrets.env`). There is no
+`claude plugin install` step and no `enabledPlugins` entry — nothing to set
+up per project. (`~/claude-plugins-central/seed/marketplaces/buddy-mcp` is a
+superseded, do-not-install reference copy only — see its CHANGELOG.)
+
+1. Sanity-check the tool actually responds (list pipelines for this
+   project's Buddy workspace). If it doesn't:
+   - Confirm the mount reached the container: `cat /var/www/html/.ddev/claude-code/.claude/mcp.json | grep buddy` inside the container. If absent, the project's `docker-compose.ai.mounts.yaml` predates this wiring — add the `BUDDY_TOKEN=$BUDDY_TOKEN` environment line (see the other 11 fleet projects for the pattern) and `ddev restart`.
+   - Confirm `BUDDY_TOKEN` reaches the container (`echo $BUDDY_TOKEN` inside it). If empty, the host-side `~/.config/secrets.env` export didn't reach `ddev start` — check it's sourced in the shell that ran `ddev start`.
+2. Identify **which pipeline** deploys to UAT for this project. Ask the user
+   if it's not obvious from the project name/history.
 
 If buddy-mcp can't be reached after this, **STOP**. Do not fall back to
 "assume the push means it deployed" — a git push landing on `uat` and a
